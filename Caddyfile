@@ -1,0 +1,35 @@
+{
+	log default {
+		output stdout
+		format console
+		level INFO
+	}
+
+	email tuyenhn@oucru.org
+
+	acme_dns cloudflare {env.CF_API_TOKEN}
+}
+
+:5001 {
+	encode
+
+	@vis header X-Forwarded-Host vis.dartdengue.org
+	handle @vis {
+		reverse_proxy 127.0.0.1:{env.PROD_WSGI_PORT} {
+		}
+	}
+
+	@pipeline header X-Forwarded-Host pipeline.dartdengue.org
+	handle @pipeline {
+		reverse_proxy 127.0.0.1:{env.PIPELINE_GUI_PORT} {
+		}
+	}
+
+	handle {
+		respond "Not found" 404
+	}
+}
+
+# put this host here so that TLS can be issued
+*.dartdengue.org {
+}

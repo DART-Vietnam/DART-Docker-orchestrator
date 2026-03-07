@@ -1,0 +1,44 @@
+x-common-confs: &common-confs
+  restart: unless-stopped
+  env_file: .env
+
+services:
+  dart-caddy:
+    <<: *common-confs
+    container_name: dart-caddy
+    image: ghcr.io/dart-vietnam/dart-caddy:main
+    ## uncomment command below for Caddy to watch Caddyfile for changes
+    # command: [ "caddy", "run", "--watch", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile" ]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    network_mode: "host"
+
+  dart-vis-app:
+    <<: *common-confs
+    container_name: dart-vis-app
+    image: ghcr.io/dart-vietnam/docker-dart-vis-app:latest
+    command: [ "gunicorn", "-w", "${PROD_WORKERS}", "app:app", "--bind", "0.0.0.0:${PROD_WSGI_PORT}" ]
+    ports:
+      - "${PROD_WSGI_PORT}:${PROD_WSGI_PORT}"
+    volumes:
+      - "${DART_PIPELINE_FORECAST_PATH}:/app/static/sample_data/predictions"
+
+  dart-pipeline-gui:
+    <<: *common-confs
+    container_name: dart-pipeline-gui
+    image: ghcr.io/dart-vietnam/dart-pipeline-gui:local-dev
+    volumes:
+      - ${STREAMLIT_CONF}:/.streamlit/config.toml
+      - ${HOST_DART_PIPELINE_WORKDIR}/sources/VNM:/root/.local/share/dart-pipeline/sources/VNM
+      - ${HOST_DART_PIPELINE_WORKDIR}/vngp_regrid_era_full.nc:/vngp_regrid_era_full.nc:ro
+      - ${HOST_DART_PIPELINE_WORKDIR}/T2m_r_tp_Vietnam_ERA5.nc:/T2m_r_tp_Vietnam_ERA5.nc:ro
+    ports:
+      # - "8051:8051" # default port
+      - "8001:8001" # from .streamlit/config.toml
+
+# anything in volumes will be persistent across starts/stops
+volumes:
+  caddy_data:
+  caddy_config:

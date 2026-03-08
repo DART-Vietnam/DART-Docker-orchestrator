@@ -6,3 +6,4 @@ Simple Docker Compose file setup to orchestra DART containers, including:
 - [`DART-Pipeline-GUI`](https://github.com/DART-Vietnam/DART-Pipeline-GUI), Python-based Streamlit web-app, a thin GUI wrapper for [`DART-Pipeline`](https://github.com/kraemer-lab/DART-Pipeline)
 - [`DART-Forecasting`](https://github.com/DART-Vietnam/DART-Forecasting), the dengue incidence forecasting work package, packaged into a container using tuned ML learners
 
+This is sort of similar to [`DART-Runner`](https://github.com/DART-Vietnam/DART-Runner), and the goal is to slowly migrate that over here

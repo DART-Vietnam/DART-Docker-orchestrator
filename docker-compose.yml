@@ -18,7 +18,7 @@ services:
   dart-vis-app:
     <<: *common-confs
     container_name: dart-vis-app
-    image: ghcr.io/dart-vietnam/docker-dart-vis-app:latest
+    image: ghcr.io/dart-vietnam/dart-vis-app:latest
     command: [ "gunicorn", "-w", "${PROD_WORKERS}", "app:app", "--bind", "0.0.0.0:${PROD_WSGI_PORT}" ]
     ports:
       - "${PROD_WSGI_PORT}:${PROD_WSGI_PORT}"
@@ -28,7 +28,7 @@ services:
   dart-pipeline-gui:
     <<: *common-confs
     container_name: dart-pipeline-gui
-    image: ghcr.io/dart-vietnam/dart-pipeline-gui:local-dev
+    image: ghcr.io/dart-vietnam/dart-pipeline-gui:latest
     volumes:
       - ${STREAMLIT_CONF}:/.streamlit/config.toml
       - ${HOST_DART_PIPELINE_WORKDIR}:/root/.local/share/dart-pipeline

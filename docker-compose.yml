@@ -3,6 +3,36 @@ x-common-confs: &common-confs
   env_file: .env
 
 services:
+  dart-vis-app:
+    <<: *common-confs
+    container_name: dart-vis-app
+    image: ghcr.io/dart-vietnam/dart-vis-app:latest
+    command: [ "gunicorn", "-w", "${VIS_APP_WORKERS}", "app:app", "--bind", "0.0.0.0:${VIS_APP_PORT}" ]
+    ports:
+      - "${VIS_APP_PORT}:${VIS_APP_PORT}"
+    volumes:
+      - "${DART_PIPELINE_FORECAST_PATH}:/app/static/sample_data/predictions"
+
+  dart-pipeline-gui:
+    <<: *common-confs
+    container_name: dart-pipeline-gui
+    image: ghcr.io/dart-vietnam/dart-pipeline-gui:latest
+    environment:
+      STREAMLIT_SERVER_CORS_ALLOWED_ORIGINS: "https://${PIPELINE_GUI_SUBDOMAIN}.dartdengue.org"
+    volumes:
+      - ${HOST_DART_PIPELINE_WORKDIR}:/root/.local/share/dart-pipeline
+      - ./config.sh:/app/config.sh
+      - ./vngp_regrid_era_full.nc:/app/vngp_regrid_era_full.nc:ro
+      - ./T2m_r_tp_Vietnam_ERA5.nc:/app/T2m_r_tp_Vietnam_ERA5.nc:ro
+    ports:
+      - "${STREAMLIT_SERVER_PORT}:${STREAMLIT_SERVER_PORT}"
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:${STREAMLIT_SERVER_PORT}/_stcore/health" ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
   dart-caddy:
     <<: *common-confs
     container_name: dart-caddy
@@ -14,31 +44,10 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     network_mode: "host"
+    depends_on:
+      - dart-pipeline-gui
+      - dart-vis-app
 
-  dart-vis-app:
-    <<: *common-confs
-    container_name: dart-vis-app
-    image: ghcr.io/dart-vietnam/dart-vis-app:latest
-    command: [ "gunicorn", "-w", "${PROD_WORKERS}", "app:app", "--bind", "0.0.0.0:${PROD_WSGI_PORT}" ]
-    ports:
-      - "${PROD_WSGI_PORT}:${PROD_WSGI_PORT}"
-    volumes:
-      - "${DART_PIPELINE_FORECAST_PATH}:/app/static/sample_data/predictions"
-
-  dart-pipeline-gui:
-    <<: *common-confs
-    container_name: dart-pipeline-gui
-    image: ghcr.io/dart-vietnam/dart-pipeline-gui:latest
-    volumes:
-      - ${STREAMLIT_CONF}:/.streamlit/config.toml
-      - ${HOST_DART_PIPELINE_WORKDIR}:/root/.local/share/dart-pipeline
-      - ./vngp_regrid_era_full.nc:/vngp_regrid_era_full.nc:ro
-      - ./T2m_r_tp_Vietnam_ERA5.nc:/T2m_r_tp_Vietnam_ERA5.nc:ro
-    ports:
-      # - "8051:8051" # default port
-      - "8001:8001" # from .streamlit/config.toml
-
-# anything in volumes will be persistent across starts/stops
 volumes:
   caddy_data:
   caddy_config:

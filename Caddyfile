@@ -19,9 +19,9 @@
 		}
 	}
 
-	@pipeline header X-Forwarded-Host pipeline.dartdengue.org
+	@pipeline header X-Forwarded-Host {env.PIPELINE_GUI_SUBDOMAIN}.dartdengue.org
 	handle @pipeline {
-		reverse_proxy 127.0.0.1:{env.PIPELINE_GUI_PORT} {
+		reverse_proxy 127.0.0.1:{env.STREAMLIT_SERVER_PORT} {
 		}
 	}
 
